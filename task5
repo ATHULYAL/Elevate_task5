@@ -1,0 +1,66 @@
+-- ─── Customers ─────────────────────────────────────
+CREATE TABLE customers (
+    customer_id   INT PRIMARY KEY,
+    full_name     VARCHAR(100) NOT NULL,
+    city          VARCHAR(50)
+);
+
+-- ─── Orders ────────────────────────────────────────
+CREATE TABLE orders (
+    order_id      INT PRIMARY KEY,
+    customer_id   INT,                       -- FK to customers
+    order_date    DATE NOT NULL,
+    grand_total   DECIMAL(10,2) NOT NULL,
+    CONSTRAINT fk_customer
+        FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+);
+
+-- ─── Sample data ───────────────────────────────────
+INSERT INTO customers (customer_id, full_name, city) VALUES
+ (1, 'Anaya Iyer',       'Kochi'),
+ (2, 'Rohan Verma',      'Bengaluru'),
+ (3, 'Meera Kurian',     'Chennai'),
+ (4, 'Vishal Kapoor',    'Hyderabad');   -- <- will have no orders
+
+INSERT INTO orders (order_id, customer_id, order_date, grand_total) VALUES
+ (101, 1, '2025-06-18',  2500.00),
+ (102, 1, '2025-06-20',   699.99),
+ (103, 2, '2025-06-22',  1230.50),
+ (104, NULL, '2025-06-25',  780.00);     -- <- orphan order, no customer
+
+mysql> SELECT c.customer_id, c.full_name, o.order_id, o.grand_total
+    -> FROM   customers AS c
+    -> JOIN   orders    AS o  ON c.customer_id = o.customer_id;
++-------------+-------------+----------+-------------+
+| customer_id | full_name   | order_id | grand_total |
++-------------+-------------+----------+-------------+
+|           1 | Anaya Iyer  |      101 |     2500.00 |
+|           1 | Anaya Iyer  |      102 |      699.99 |
+|           2 | Rohan Verma |      103 |     1230.50 |
++-------------+-------------+----------+-------------+
+
+mysql> SELECT c.customer_id, c.full_name, o.order_id, o.grand_total
+    -> FROM   customers AS c
+    -> LEFT JOIN orders AS o  ON c.customer_id = o.customer_id;
++-------------+---------------+----------+-------------+
+| customer_id | full_name     | order_id | grand_total |
++-------------+---------------+----------+-------------+
+|           1 | Anaya Iyer    |      101 |     2500.00 |
+|           1 | Anaya Iyer    |      102 |      699.99 |
+|           2 | Rohan Verma   |      103 |     1230.50 |
+|           3 | Meera Kurian  |     NULL |        NULL |
+|           4 | Vishal Kapoor |     NULL |        NULL |
++-------------+---------------+----------+-------------+
+
+
+mysql> SELECT c.customer_id, c.full_name, o.order_id, o.grand_total
+    -> FROM   customers AS c
+    -> RIGHT JOIN orders AS o  ON c.customer_id = o.customer_id;
++-------------+-------------+----------+-------------+
+| customer_id | full_name   | order_id | grand_total |
++-------------+-------------+----------+-------------+
+|           1 | Anaya Iyer  |      101 |     2500.00 |
+|           1 | Anaya Iyer  |      102 |      699.99 |
+|           2 | Rohan Verma |      103 |     1230.50 |
+|        NULL | NULL        |      104 |      780.00 |
++-------------+-------------+----------+-------------+
